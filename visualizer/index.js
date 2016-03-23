@@ -195,7 +195,9 @@ function $(sel) { return document.querySelector(sel); }
   console.log('%cOhm visualizer', 'color: #e0a; font-family: Avenir; font-size: 18px;');
   console.log([
     '- `ohm` is the Ohm library',
-    '- `grammar` is the current grammar object (if the source is valid)'
+    '- `ohmEditor` is editor object with',
+    '  `.grammar` as the current grammar object (if the source is valid)',
+    '  `.ui` containing the `inputEditor` and `grammarEditor`'
   ].join('\n'));
   /* eslint-enable no-console */
 
