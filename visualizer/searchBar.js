@@ -2,7 +2,14 @@
 
 'use strict';
 
-var searchBar = (function() {  // eslint-disable-line no-unused-vars
+(function(root, initModule) {
+  if (typeof exports === 'object') {
+    module.exports = initModule;
+  } else {
+    root.ohmEditor = root.ohmEditor || {};
+    initModule(root.ohmEditor);
+  }
+})(this, function(ohmEditor) {
   // Returns the first ancestor node of `el` that has class `className`.
   function ancestorWithClassName(el, className) {
     var node = el;
@@ -103,10 +110,10 @@ var searchBar = (function() {  // eslint-disable-line no-unused-vars
   var editorKeyMap = {};
   editorKeyMap['Ctrl-F'] = editorKeyMap['Cmd-F'] = 'findPersistent';
 
-  return {
+  ohmEditor.searchBar = {
     // Initialize the search bar for the CodeMirror instance `cm`.
     initializeForEditor: function(cm) {
       cm.addKeyMap(editorKeyMap);
     }
   };
-})();
+});

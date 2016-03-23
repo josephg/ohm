@@ -3,7 +3,14 @@
 
 'use strict';
 
-var updateRuleHyperlinks = (function() {  // eslint-disable-line no-unused-vars
+(function(root, initModule) {
+  if (typeof exports === 'object') {
+    module.exports = initModule;
+  } else {
+    root.ohmEditor = root.ohmEditor || {};
+    initModule(root.ohmEditor);
+  }
+})(this, function(ohmEditor) {
   var registeredListeners = false;
   var grammar;
   var grammarEditor;
@@ -108,7 +115,7 @@ var updateRuleHyperlinks = (function() {  // eslint-disable-line no-unused-vars
   }
 
   // Export a function to be called when the grammar contents change.
-  return function onGrammarChanged(editor, matchResult, g) {
+  ohmEditor.updateRuleHyperlinks = function onGrammarChanged(editor, matchResult, g) {
     if (!registeredListeners) {
       grammarEditor = editor;
       registerListeners(editor);
@@ -117,4 +124,4 @@ var updateRuleHyperlinks = (function() {  // eslint-disable-line no-unused-vars
     grammar = g;
     grammarPosInfos = matchResult.succeeded() ? matchResult.state.posInfos : null;
   };
-})();
+});
