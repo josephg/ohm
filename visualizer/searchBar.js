@@ -1,4 +1,4 @@
-/* global $, CodeMirror */
+/* global $ */
 
 'use strict';
 
@@ -7,9 +7,9 @@
     module.exports = initModule;
   } else {
     root.ohmEditor = root.ohmEditor || {};
-    initModule(root.ohmEditor);
+    initModule(root.ohmEditor, root.CodeMirror);
   }
-})(this, function(ohmEditor) {
+})(this, function(ohmEditor, CodeMirror) {
   // Returns the first ancestor node of `el` that has class `className`.
   function ancestorWithClassName(el, className) {
     var node = el;

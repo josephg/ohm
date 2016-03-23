@@ -1,155 +1,155 @@
 /* eslint-env browser */
-/* global cmUtil, CodeMirror, ohm, ohmEditor */
 
 'use strict';
 
 function $(sel) { return document.querySelector(sel); }
-function $$(sel) { return Array.prototype.slice.call(document.querySelectorAll(sel)); }
 
-if (typeof ohmEditor === 'undefined') {
-  ohmEditor = {}; // eslint-disable-line no-undef
-}
-
-ohmEditor.options = {};
-ohmEditor.inputEditor = CodeMirror($('#inputContainer .editorWrapper'));
-ohmEditor.grammarEditor = CodeMirror($('#grammarContainer .editorWrapper'));
-ohmEditor.grammar = null;
-
-// Misc Helpers
-// ------------
-
-ohmEditor.errorMarks = {
-  grammar: null,
-  input: null
-};
-
-ohmEditor.hideError = function(category, editor) {
-  var errInfo = this.errorMarks[category];
-  if (errInfo) {
-    errInfo.mark.clear();
-    clearTimeout(errInfo.timeout);
-    if (errInfo.widget) {
-      errInfo.widget.clear();
-    }
-    this.errorMarks[category] = null;
-  }
-};
-
-ohmEditor.setError = function(category, editor, interval, message) {
-  this.hideError(category, editor);
-
-  this.errorMarks[category] = {
-    mark: cmUtil.markInterval(editor, interval, 'error-interval', false),
-    timeout: setTimeout(function() {
-      this.showError(category, editor, interval, message);
-    }.bind(this), 1500),
-    widget: null
-  };
-};
-
-ohmEditor.showError = function(category, editor, interval, message) {
-  var errorEl = document.createElement('div');
-  errorEl.className = 'error';
-  errorEl.textContent = message;
-  var line = editor.posFromIndex(interval.endIdx).line;
-  this.errorMarks[category].widget = editor.addLineWidget(line, errorEl, {insertAt: 0});
-};
-
-ohmEditor.hideBottomOverlay = function() {
-  $('#bottomSection .overlay').style.width = 0;
-};
-
-ohmEditor.showBottomOverlay = function() {
-  $('#bottomSection .overlay').style.width = '100%';
-};
-
-ohmEditor.restoreEditorState = function(editor, key, defaultEl) {
-  var value = localStorage.getItem(key);
-  if (value) {
-    editor.setValue(value);
-  } else if (defaultEl) {
-    editor.setValue(defaultEl.textContent);
-  }
-};
-
-ohmEditor.saveEditorState = function(editor, key) {
-  localStorage.setItem(key, editor.getValue());
-};
-
-ohmEditor.parseGrammar = function(source) {
-  var matchResult = ohm.ohmGrammar.match(source);
-  var grammar;
-  var err;
-
-  if (matchResult.succeeded()) {
-    var ns = {};
-    try {
-      ohm._buildGrammar(matchResult, ns);
-      var firstProp = Object.keys(ns)[0];
-      if (firstProp) {
-        grammar = ns[firstProp];
-      }
-    } catch (ex) {
-      err = ex;
-    }
+(function(root, initModule) {
+  if (typeof exports === 'object') {
+    module.exports = initModule;
   } else {
-    err = {
-      message: matchResult.message,
-      shortMessage: matchResult.shortMessage,
-      interval: matchResult.getInterval()
-    };
+    root.ohmEditor = root.ohmEditor || {};
+    initModule(root.ohm, root.ohmEditor, root.cmUtil, root.CodeMirror);
   }
-  return {
-    matchResult: matchResult,
-    grammar: grammar,
-    error: err
+})(this, function(ohm, ohmEditor, cmUtil, CodeMirror) {
+  function $$(sel) { return Array.prototype.slice.call(document.querySelectorAll(sel)); }
+
+  // EXPORTS
+  ohmEditor.options = {};
+  ohmEditor.ui = {
+    inputEditor: CodeMirror($('#inputContainer .editorWrapper')),
+    grammarEditor: CodeMirror($('#grammarContainer .editorWrapper'))
   };
-};
+  ohmEditor.grammar = null;
 
-// Main
-// ----
+  // Misc Helpers (EXPORTS)
+  // ----------------------
 
-(function main() {
+  ohmEditor.errorMarks = {
+    grammar: null,
+    input: null
+  };
+
+  ohmEditor.hideError = function(category, editor) {
+    var errInfo = this.errorMarks[category];
+    if (errInfo) {
+      errInfo.mark.clear();
+      clearTimeout(errInfo.timeout);
+      if (errInfo.widget) {
+        errInfo.widget.clear();
+      }
+      this.errorMarks[category] = null;
+    }
+  };
+
+  ohmEditor.setError = function(category, editor, interval, message) {
+    this.hideError(category, editor);
+
+    this.errorMarks[category] = {
+      mark: cmUtil.markInterval(editor, interval, 'error-interval', false),
+      timeout: setTimeout(this.showError.bind(this, category, editor, interval, message), 1500),
+      widget: null
+    };
+  };
+
+  ohmEditor.showError = function(category, editor, interval, message) {
+    var errorEl = document.createElement('div');
+    errorEl.className = 'error';
+    errorEl.textContent = message;
+    var line = editor.posFromIndex(interval.endIdx).line;
+    this.errorMarks[category].widget = editor.addLineWidget(line, errorEl, {insertAt: 0});
+  };
+
+  ohmEditor.hideBottomOverlay = function() {
+    $('#bottomSection .overlay').style.width = 0;
+  };
+
+  ohmEditor.showBottomOverlay = function() {
+    $('#bottomSection .overlay').style.width = '100%';
+  };
+
+  ohmEditor.restoreEditorState = function(editor, key, defaultEl) {
+    var value = localStorage.getItem(key);
+    if (value) {
+      editor.setValue(value);
+    } else if (defaultEl) {
+      editor.setValue(defaultEl.textContent);
+    }
+  };
+
+  ohmEditor.saveEditorState = function(editor, key) {
+    localStorage.setItem(key, editor.getValue());
+  };
+
+  ohmEditor.parseGrammar = function() {
+    var source = this.ui.grammarEditor.getValue();
+    var matchResult = ohm.ohmGrammar.match(source);
+    var grammar;
+    var err;
+
+    if (matchResult.succeeded()) {
+      var ns = {};
+      try {
+        ohm._buildGrammar(matchResult, ns);
+        var firstProp = Object.keys(ns)[0];
+        if (firstProp) {
+          grammar = ns[firstProp];
+        }
+      } catch (ex) {
+        err = ex;
+      }
+    } else {
+      err = {
+        message: matchResult.message,
+        shortMessage: matchResult.shortMessage,
+        interval: matchResult.getInterval()
+      };
+    }
+    return {
+      matchResult: matchResult,
+      grammar: grammar,
+      error: err
+    };
+  };
+
+  // Main
+  // ----
+
   var checkboxes = document.querySelectorAll('#options input[type=checkbox]');
   var refreshTimeout;
   var grammarChanged = true;
 
   var options = ohmEditor.options;
-  var inputEditor = ohmEditor.inputEditor;
-  var grammarEditor = ohmEditor.grammarEditor;
 
-  ohmEditor.searchBar.initializeForEditor(inputEditor);
-  ohmEditor.searchBar.initializeForEditor(grammarEditor);
+  ohmEditor.searchBar.initializeForEditor(ohmEditor.ui.inputEditor);
+  ohmEditor.searchBar.initializeForEditor(ohmEditor.ui.grammarEditor);
 
-  var ui = {
-    grammarEditor: grammarEditor,
-    inputEditor: inputEditor
-  };
+  var ui = ohmEditor.ui;
 
   function triggerRefresh(delay) {
     ohmEditor.showBottomOverlay();
     if (refreshTimeout) {
       clearTimeout(refreshTimeout);
     }
-    refreshTimeout = setTimeout(refresh, delay || 0);
+    refreshTimeout = setTimeout(ohmEditor.refresh.bind(ohmEditor), delay || 0);
   }
   Array.prototype.forEach.call(checkboxes, function(cb) {
     cb.addEventListener('click', function(e) { triggerRefresh(); });
   });
 
-  ohmEditor.restoreEditorState(inputEditor, 'input', $('#sampleInput'));
-  ohmEditor.restoreEditorState(grammarEditor, 'grammar', $('#sampleGrammar'));
+  ohmEditor.restoreEditorState(ohmEditor.ui.inputEditor, 'input', $('#sampleInput'));
+  ohmEditor.restoreEditorState(ohmEditor.ui.grammarEditor, 'grammar', $('#sampleGrammar'));
 
-  inputEditor.on('change', function() { triggerRefresh(250); });
-  grammarEditor.on('change', function() {
+  ohmEditor.ui.inputEditor.on('change', function() { triggerRefresh(250); });
+  ohmEditor.ui.grammarEditor.on('change', function() {
     grammarChanged = true;
-    ohmEditor.hideError('grammar', grammarEditor);
+    ohmEditor.hideError('grammar', ohmEditor.ui.grammarEditor);
     triggerRefresh(250);
   });
 
-  function refresh() {
-    ohmEditor.hideError('input', inputEditor);
-    ohmEditor.saveEditorState(inputEditor, 'input');
+  ohmEditor.refresh = function() {
+    this.hideError('input', this.ui.inputEditor);
+    this.saveEditorState(this.ui.inputEditor, 'input');
 
     // Refresh the option values.
     for (var i = 0; i < checkboxes.length; ++i) {
@@ -159,37 +159,37 @@ ohmEditor.parseGrammar = function(source) {
 
     if (grammarChanged) {
       grammarChanged = false;
-      ohmEditor.saveEditorState(grammarEditor, 'grammar');
+      this.saveEditorState(this.ui.grammarEditor, 'grammar');
 
-      var result = ohmEditor.parseGrammar(grammarEditor.getValue());
-      ohmEditor.grammar = result.grammar;
-      ohmEditor.updateExternalRules(grammarEditor, result.matchResult, ohmEditor.grammar);
-      ohmEditor.updateRuleHyperlinks(grammarEditor, result.matchResult, ohmEditor.grammar);
+      var result = this.parseGrammar();
+      this.grammar = result.grammar;
+      this.updateExternalRules(this.ui.grammarEditor, result.matchResult, this.grammar);
+      this.updateRuleHyperlinks(this.ui.grammarEditor, result.matchResult, this.grammar);
       if (result.error) {
         var err = result.error;
-        ohmEditor.setError('grammar', grammarEditor, err.interval,
+        this.setError('grammar', this.ui.grammarEditor, err.interval,
           err.shortMessage || err.message);
         return;
       }
     }
 
-    if (ohmEditor.grammar && ohmEditor.grammar.defaultStartRule) {
+    if (this.grammar && this.grammar.defaultStartRule) {
       // TODO: Move this stuff to parseTree.js. We probably want a proper event system,
       // with events like 'beforeGrammarParse' and 'afterGrammarParse'.
-      ohmEditor.hideBottomOverlay();
+      this.hideBottomOverlay();
 
-      var trace = ohmEditor.grammar.trace(inputEditor.getValue());
+      var trace = this.grammar.trace(this.ui.inputEditor.getValue());
       if (trace.result.failed()) {
         // Intervals with start == end won't show up in CodeMirror.
         var interval = trace.result.getInterval();
         interval.endIdx += 1;
-        ohmEditor.setError('input', inputEditor, interval,
+        this.setError('input', this.ui.inputEditor, interval,
           'Expected ' + trace.result.getExpectedText());
       }
 
-      ohmEditor.refreshParseTree(ui, ohmEditor.grammar, trace, options.showFailures);
+      this.refreshParseTree(ui, this.grammar, trace, options.showFailures);
     }
-  }
+  };
 
   /* eslint-disable no-console */
   console.log('%cOhm visualizer', 'color: #e0a; font-family: Avenir; font-size: 18px;');
@@ -199,9 +199,9 @@ ohmEditor.parseGrammar = function(source) {
   ].join('\n'));
   /* eslint-enable no-console */
 
-  refresh();
+  ohmEditor.refresh();
 
   $$('.hiddenDuringLoading').forEach(function(el) {
     el.classList.remove('hiddenDuringLoading');
   });
-})();
+});

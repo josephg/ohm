@@ -1,5 +1,4 @@
 /* eslint-env browser */
-/* global cmUtil */
 
 'use strict';
 
@@ -8,9 +7,9 @@
     module.exports = initModule;
   } else {
     root.ohmEditor = root.ohmEditor || {};
-    initModule(root.ohmEditor);
+    initModule(root.ohmEditor, root.cmUtil);
   }
-})(this, function(ohmEditor) {
+})(this, function(ohmEditor, cmUtil) {
   var registeredListeners = false;
   var grammar;
   var grammarEditor;
