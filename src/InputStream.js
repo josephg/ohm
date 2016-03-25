@@ -59,12 +59,12 @@ function StringInputStream(source) {
 inherits(StringInputStream, InputStream);
 
 StringInputStream.prototype.matchString = function(s) {
-  for (var idx = 0; idx < s.length; idx++) {
-    if (this.matchExactly(s[idx]) === common.fail) {
-      return common.fail;
-    }
+  if (this.sourceSlice(this.pos, this.pos + s.length) === s) {
+    this.pos += s.length;
+    return true;
+  } else {
+    return common.fail;
   }
-  return true;
 };
 
 function ListInputStream(source) {
